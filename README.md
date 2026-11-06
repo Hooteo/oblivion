@@ -1,4 +1,4 @@
-# privacy-sweep
+# Oblivion
 
 Alternativa open source e self-hosted a Incogni / DeleteMe. Invia ai data broker richieste di cancellazione dei dati personali (art. 17 GDPR, più opposizione art. 21 e, per gli USA, richiesta CCPA di delete/opt-out), legge le risposte e ripete tutto in automatico ogni 3 o 6 mesi.
 
@@ -12,7 +12,7 @@ Alternativa open source e self-hosted a Incogni / DeleteMe. Invia ai data broker
 ## Avvio rapido
 
 ```bash
-git clone https://github.com/Hooteo/privacy-sweep.git && cd privacy-sweep
+git clone https://github.com/Hooteo/oblivion.git && cd oblivion
 cp .env.example .env    # imposta DASHBOARD_PASSWORD e SECRET_KEY
 mkdir -p state && sudo chown 1000:1000 state   # il container gira come utente 1000
 docker compose up -d    # dashboard su http://IP:8095  (utente admin)

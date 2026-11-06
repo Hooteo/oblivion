@@ -14,7 +14,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship,
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 os.makedirs(DATA_DIR, exist_ok=True)
 engine = create_engine(
-    f"sqlite:///{DATA_DIR}/privacy-sweep.db",
+    f"sqlite:///{DATA_DIR}/oblivion.db",
     connect_args={"check_same_thread": False, "timeout": 30},
 )
 

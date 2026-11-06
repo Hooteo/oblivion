@@ -27,7 +27,7 @@ from .db import (
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-log = logging.getLogger("privacy-sweep")
+log = logging.getLogger("oblivion")
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 BASE = os.path.dirname(__file__)
 PAGE = 100
@@ -66,7 +66,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 ok = False
         if not ok:
             return PlainTextResponse("Autenticazione richiesta", 401,
-                                     {"WWW-Authenticate": 'Basic realm="privacy-sweep"'})
+                                     {"WWW-Authenticate": 'Basic realm="oblivion"'})
         if request.method == "POST":  # protezione CSRF: il POST deve arrivare dalla dashboard stessa
             origin = request.headers.get("origin") or request.headers.get("referer") or ""
             if origin and urlparse(origin).netloc != request.headers.get("host"):
@@ -80,12 +80,12 @@ async def lifespan(_app):
     with session_scope() as s:
         broker_db.load_bundled(s)
     sched = scheduler.start_scheduler()
-    log.info("privacy-sweep avviato")
+    log.info("Oblivion avviato")
     yield
     sched.shutdown(wait=False)
 
 
-app = FastAPI(title="privacy-sweep", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app = FastAPI(title="Oblivion", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 app.add_middleware(AuthMiddleware)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE, "static")), name="static")
 tpl = Jinja2Templates(directory=os.path.join(BASE, "templates"))

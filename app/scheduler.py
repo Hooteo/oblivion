@@ -16,7 +16,7 @@ from .db import (
     Broker, Campaign, Identity, Message, Request, log_event, session_scope, utcnow,
 )
 
-log = logging.getLogger("privacy-sweep")
+log = logging.getLogger("oblivion")
 _send_lock = threading.Lock()
 _imap_lock = threading.Lock()
 _backoff: dict[int, datetime] = {}  # identity_id -> non inviare prima di

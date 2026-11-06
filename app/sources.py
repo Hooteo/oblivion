@@ -17,7 +17,7 @@ DD_CATEGORIES = {"ads", "addresses", "credit agency"}
 RELEVANT = {"all", "it", "eu"}
 
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
-UA = "privacy-sweep/1.0 (+https://github.com/Hooteo/privacy-sweep)"
+UA = "oblivion/1.0 (+https://github.com/Hooteo/oblivion)"
 
 
 def _get(url: str, timeout: int = 60) -> bytes:

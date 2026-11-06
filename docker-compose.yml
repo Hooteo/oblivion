@@ -1,8 +1,8 @@
 services:
-  privacy-sweep:
-    image: ghcr.io/hooteo/privacy-sweep:latest
+  oblivion:
+    image: ghcr.io/hooteo/oblivion:latest
     build: .   # "docker compose pull" usa l'immagine di GitHub, "up --build" la costruisce in locale
-    container_name: privacy-sweep
+    container_name: oblivion
     restart: unless-stopped
     ports:
       - "8095:8000"
