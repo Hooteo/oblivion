@@ -14,6 +14,7 @@ Alternativa open source e self-hosted a Incogni / DeleteMe. Invia ai data broker
 ```bash
 git clone https://github.com/Hooteo/privacy-sweep.git && cd privacy-sweep
 cp .env.example .env    # imposta DASHBOARD_PASSWORD e SECRET_KEY
+mkdir -p state && sudo chown 1000:1000 state   # il container gira come utente 1000
 docker compose up -d    # dashboard su http://IP:8095  (utente admin)
 ```
 
@@ -23,7 +24,7 @@ Genera la `SECRET_KEY` con:
 docker run --rm python:3.13-slim sh -c "pip -q install cryptography && python -c 'from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())'"
 ```
 
-Senza `SECRET_KEY` la chiave viene creata in `data/secret.key`. Le password SMTP/IMAP sono cifrate con questa chiave: se la perdi devi reinserirle.
+Senza `SECRET_KEY` la chiave viene creata in `state/secret.key`. Database e impostazioni stanno in `state/`: è la cartella da salvare nei backup. Le password SMTP/IMAP sono cifrate con questa chiave: se la perdi devi reinserirle.
 
 ## Primo utilizzo
 

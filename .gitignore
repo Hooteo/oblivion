@@ -6,3 +6,4 @@ __pycache__/
 /data/dashboard-password.txt
 .venv/
 .pytest_cache/
+/state/

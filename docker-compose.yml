@@ -14,4 +14,4 @@ services:
       # Se manca viene generata in /data/secret.key (allora fai il backup di tutta la cartella).
       SECRET_KEY: ${SECRET_KEY:-}
     volumes:
-      - ./data:/data
+      - ./state:/data   # database, chiave e password: e' la cartella da salvare nei backup
