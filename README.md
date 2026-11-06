@@ -3,7 +3,7 @@
 Alternativa open source e self-hosted a Incogni / DeleteMe. Invia ai data broker richieste di cancellazione dei dati personali (art. 17 GDPR, più opposizione art. 21 e, per gli USA, richiesta CCPA di delete/opt-out), legge le risposte e ripete tutto in automatico ogni 3 o 6 mesi.
 
 - **~1000 broker inclusi**: registro ufficiale dei data broker della California (CPPA) + database di [datarequests.org](https://www.datarequests.org) (categorie pubblicità, indirizzi, agenzie di credito). Si aggiorna dalla dashboard o automaticamente ogni mese tramite GitHub Actions.
-- **Più caselle email**: ogni casella invia a nome proprio e chiede la cancellazione dei dati legati a quell'indirizzo. Si configurano dalla dashboard (con preset per Gmail, Outlook, iCloud, Yahoo, Libero, Virgilio, Aruba, Tiscali, Fastmail).
+- **Più caselle email**: ogni casella invia a nome proprio e chiede la cancellazione dei dati legati a quell'indirizzo. Si configurano dalla dashboard (con preset per Gmail, Outlook, iCloud, Yahoo, Libero, Virgilio, Aruba, Tiscali, Fastmail e Proton Mail).
 - **Dashboard**: a chi hai scritto, chi ha risposto, chi ha confermato, chi chiede una verifica, chi non ha risposto, rimbalzi.
 - **Lettura risposte via IMAP** (sola lettura): abbina le risposte alle richieste (Message-ID, dominio, nome del broker) e le classifica: *confermata*, *nessun dato*, *serve un tuo intervento*, *rifiutata*, *rimbalzo*.
 - **Solleciti automatici** dopo 35 giorni senza risposta, poi chiusura come "nessuna risposta".
@@ -34,6 +34,37 @@ Il container sistema da solo i permessi della cartella `state/` all'avvio, poi g
 3. In **Impostazioni** controlla il testo (in inglese, perché va a broker di tutto il mondo).
 4. In **Broker** controlla quali sono attivi. Disattivati di default: broker rilevanti solo per altri paesi (es. solo Germania), agenzie di credito, broker senza email.
 5. Spunta **Avvia subito la prima campagna** o premi **Avvia campagna ora**. Le campagne successive partono da sole ogni 3 o 6 mesi.
+
+## Proton Mail
+
+Proton non offre SMTP/IMAP diretti. Ci sono due strade:
+
+**1. Proton Mail Bridge** (piani a pagamento: Mail Plus, Unlimited, ecc.). Invia e legge le risposte. Il Bridge gira in un container nello stesso stack:
+
+```yaml
+services:
+  oblivion:
+    # ... come sopra ...
+  protonmail-bridge:
+    image: shenxn/protonmail-bridge:latest
+    container_name: protonmail-bridge
+    restart: unless-stopped
+    volumes:
+      - /opt/cont/oblivion/proton:/root
+```
+
+Prima di avviarlo fai il login una volta sola, dal server:
+
+```bash
+docker run --rm -it -v /opt/cont/oblivion/proton:/root shenxn/protonmail-bridge init
+# nel prompt del Bridge:  login   (email, password, codice 2FA)
+#                         info    (mostra utente e password del Bridge)
+#                         exit
+```
+
+In Oblivion scegli il provider **proton (bridge)**. Server `protonmail-bridge`, SMTP 25 STARTTLS, IMAP 143. Come utente e password usa **quelli mostrati da `info`**, non quelli dell'account Proton. Lascia spuntato "Accetta certificati autofirmati": il Bridge usa un certificato suo, e il traffico resta dentro la rete Docker. Non serve pubblicare porte del Bridge.
+
+**2. Token SMTP** (solo indirizzi su un tuo dominio, piani a pagamento). Proton → Impostazioni → IMAP/SMTP → Token SMTP. Provider **proton (token SMTP)**, utente = indirizzo, password = token. Le richieste partono, ma le risposte non vengono lette (niente IMAP): andranno segnate a mano.
 
 ## Come funziona
 

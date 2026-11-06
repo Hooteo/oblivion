@@ -28,8 +28,16 @@ def render(template: str, identity: Identity, broker: Broker, original: datetime
     ))
 
 
-def smtp_connect(identity: Identity) -> smtplib.SMTP:
+def tls_context(identity: Identity) -> ssl.SSLContext:
     ctx = ssl.create_default_context()
+    if not getattr(identity, "tls_verify", True):
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
+def smtp_connect(identity: Identity) -> smtplib.SMTP:
+    ctx = tls_context(identity)
     if identity.smtp_security == "ssl":
         conn = smtplib.SMTP_SSL(identity.smtp_host, identity.smtp_port, timeout=60, context=ctx)
     else:

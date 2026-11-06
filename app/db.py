@@ -56,6 +56,8 @@ class Identity(Base):
     imap_user: Mapped[str] = mapped_column(String(200), default="")
     imap_password_enc: Mapped[str] = mapped_column(Text, default="")
     imap_folders: Mapped[str] = mapped_column(String(300), default="INBOX")
+    # False solo per Proton Mail Bridge, che usa un certificato autofirmato sulla rete locale
+    tls_verify: Mapped[bool] = mapped_column(Boolean, default=True)
     interval_months: Mapped[int] = mapped_column(Integer, default=6)
     daily_limit: Mapped[int] = mapped_column(Integer, default=80)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -209,5 +211,16 @@ def log_event(s, text: str, level: str = "info") -> None:
     s.add(Event(text=text[:2000], level=level))
 
 
+# colonne aggiunte dopo la prima versione: (tabella, colonna, definizione SQL)
+_MIGRATIONS = [
+    ("identities", "tls_verify", "BOOLEAN NOT NULL DEFAULT 1"),
+]
+
+
 def init_db() -> None:
     Base.metadata.create_all(engine)
+    with engine.begin() as conn:
+        for table, col, ddl in _MIGRATIONS:
+            cols = {r[1] for r in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+            if col not in cols:
+                conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")

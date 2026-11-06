@@ -327,15 +327,19 @@ def broker_refresh():
 # ------------------------------------------------------------------ caselle email
 
 PRESETS = {
-    "gmail": ("smtp.gmail.com", 465, "ssl", "imap.gmail.com", 993, "INBOX,[Gmail]/Spam"),
-    "outlook": ("smtp-mail.outlook.com", 587, "starttls", "outlook.office365.com", 993, "INBOX,Junk"),
-    "icloud": ("smtp.mail.me.com", 587, "starttls", "imap.mail.me.com", 993, "INBOX,Junk"),
-    "yahoo": ("smtp.mail.yahoo.com", 465, "ssl", "imap.mail.yahoo.com", 993, "INBOX,Bulk"),
-    "libero": ("smtp.libero.it", 465, "ssl", "imapmail.libero.it", 993, "INBOX,Spam"),
-    "virgilio": ("out.virgilio.it", 465, "ssl", "in.virgilio.it", 993, "INBOX,Spam"),
-    "aruba": ("smtps.aruba.it", 465, "ssl", "imaps.aruba.it", 993, "INBOX,Spam"),
-    "tiscali": ("smtp.tiscali.it", 465, "ssl", "imap.tiscali.it", 993, "INBOX,Spam"),
-    "fastmail": ("smtp.fastmail.com", 465, "ssl", "imap.fastmail.com", 993, "INBOX,Spam"),
+    "gmail": ("smtp.gmail.com", 465, "ssl", "imap.gmail.com", 993, "INBOX,[Gmail]/Spam", True),
+    "outlook": ("smtp-mail.outlook.com", 587, "starttls", "outlook.office365.com", 993, "INBOX,Junk", True),
+    "icloud": ("smtp.mail.me.com", 587, "starttls", "imap.mail.me.com", 993, "INBOX,Junk", True),
+    "yahoo": ("smtp.mail.yahoo.com", 465, "ssl", "imap.mail.yahoo.com", 993, "INBOX,Bulk", True),
+    "libero": ("smtp.libero.it", 465, "ssl", "imapmail.libero.it", 993, "INBOX,Spam", True),
+    "virgilio": ("out.virgilio.it", 465, "ssl", "in.virgilio.it", 993, "INBOX,Spam", True),
+    "aruba": ("smtps.aruba.it", 465, "ssl", "imaps.aruba.it", 993, "INBOX,Spam", True),
+    "tiscali": ("smtp.tiscali.it", 465, "ssl", "imap.tiscali.it", 993, "INBOX,Spam", True),
+    "fastmail": ("smtp.fastmail.com", 465, "ssl", "imap.fastmail.com", 993, "INBOX,Spam", True),
+    # Proton non ha SMTP/IMAP diretti: serve Proton Mail Bridge (piani a pagamento) in un container.
+    "proton (bridge)": ("protonmail-bridge", 25, "starttls", "protonmail-bridge", 143, "INBOX,Spam", False),
+    # Token SMTP: solo indirizzi su dominio personalizzato, piani a pagamento, nessuna lettura IMAP.
+    "proton (token SMTP)": ("smtp.protonmail.ch", 587, "starttls", "", 993, "INBOX", True),
 }
 
 
@@ -371,6 +375,7 @@ def identity_save(
     smtp_security: str = Form("ssl"), smtp_user: str = Form(""), smtp_password: str = Form(""),
     imap_host: str = Form(""), imap_port: int = Form(993), imap_user: str = Form(""),
     imap_password: str = Form(""), imap_same_password: str = Form(""), imap_folders: str = Form("INBOX"),
+    tls_insecure: str = Form(""),
     interval_months: int = Form(6), daily_limit: int = Form(80), enabled: str = Form(""),
     start_now: str = Form(""),
 ):
@@ -396,6 +401,7 @@ def identity_save(
         elif imap_password:
             i.imap_password_enc = encrypt(imap_password)
         i.imap_folders = imap_folders.strip() or "INBOX"
+        i.tls_verify = not tls_insecure
         changed_interval = i.interval_months != interval_months
         i.interval_months = 3 if interval_months == 3 else 6 if interval_months == 6 else max(1, interval_months)
         i.daily_limit = max(1, min(daily_limit, 2000))

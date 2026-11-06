@@ -31,6 +31,8 @@
  <div class="field"><label>Cartelle da leggere (separate da virgola)</label><input name="imap_folders" value="{{ i.imap_folders if i else 'INBOX' }}"></div>
 </div>
 <label class="chk" style="margin-top:10px"><input type="checkbox" name="imap_same_password" value="1" {{ 'checked' if not i }}> Usa la stessa password dell'SMTP</label>
+<label class="chk"><input type="checkbox" name="tls_insecure" value="1" {{ 'checked' if i and not i.tls_verify }}> Accetta certificati autofirmati (solo per Proton Mail Bridge sulla rete locale)</label>
+<div id="proton-note" class="flash small" style="display:none;margin-top:10px"></div>
 <p class="muted small">Le password sono salvate cifrate nel database. La lettura IMAP è in sola lettura: non sposta né segna come lette le tue mail.</p>
 </div>
 
@@ -59,6 +61,13 @@ document.getElementById('preset').addEventListener('change', e => {
   const p = P[e.target.value]; if (!p) return;
   const f = document.forms[0];
   [f.smtp_host.value, f.smtp_port.value, f.smtp_security.value, f.imap_host.value, f.imap_port.value, f.imap_folders.value] = p;
+  f.tls_insecure.checked = p[6] === false;
+  const note = document.getElementById('proton-note');
+  const k = e.target.value;
+  note.style.display = k.startsWith('proton') ? 'block' : 'none';
+  if (k === 'proton (bridge)') note.innerHTML = 'Proton Mail Bridge deve girare in un container raggiungibile come <code>protonmail-bridge</code> (vedi README). Utente e password sono quelli <b>mostrati dal Bridge</b> dopo il login, non quelli del tuo account Proton. Richiede un piano Proton a pagamento.';
+  if (k === 'proton (token SMTP)') note.innerHTML = 'Solo per indirizzi su un tuo dominio, con piano a pagamento: crea il token in Proton → Impostazioni → IMAP/SMTP → Token SMTP. Utente = indirizzo, password = token. Senza IMAP le risposte non vengono lette: usa il Bridge se vuoi anche quelle.';
+  if (!k.startsWith('proton')) note.innerHTML = '';
 });
 </script>
 {% endblock %}

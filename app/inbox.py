@@ -253,13 +253,14 @@ def apply_reply(s, req: Request, msg: EmailMessage, text: str, cls: str) -> None
 # ------------------------------------------------------------------ IMAP
 
 def imap_connect(identity: Identity) -> imaplib.IMAP4:
+    from .mailer import tls_context
     if identity.imap_port != 993:
         conn = imaplib.IMAP4(identity.imap_host, identity.imap_port, timeout=60)
         if "STARTTLS" in conn.capabilities:
-            conn.starttls(ssl_context=ssl.create_default_context())
+            conn.starttls(ssl_context=tls_context(identity))
     else:
         conn = imaplib.IMAP4_SSL(identity.imap_host, identity.imap_port,
-                                 ssl_context=ssl.create_default_context(), timeout=60)
+                                 ssl_context=tls_context(identity), timeout=60)
     try:
         conn.login(identity.imap_user or identity.email, decrypt(identity.imap_password_enc))
     except imaplib.IMAP4.error as e:
