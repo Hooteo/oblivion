@@ -142,7 +142,8 @@ def dashboard(request: HttpRequest):
             camp = s.scalars(select(Campaign).where(Campaign.identity_id == i.id)
                              .order_by(Campaign.started_at.desc())).first()
             cards.append({"i": i, "st": _stats(s, i.id), "camp": camp,
-                          "smtp": scheduler.smtp_ready(i), "imap": scheduler.imap_ready(i)})
+                          "smtp": scheduler.smtp_ready(i), "imap": scheduler.imap_ready(i),
+                          "send": scheduler.send_state(s, i)})
         replies = s.scalars(select(Message).where(Message.direction == "in")
                             .order_by(Message.date.desc()).limit(15)).all()
         for m in replies:
@@ -407,6 +408,7 @@ def identity_save(
         i.daily_limit = max(1, min(daily_limit, 2000))
         i.enabled = bool(enabled)
         i.last_error = ""
+        scheduler.clear_backoff(i.id)
         if changed_interval and i.last_campaign_at:
             i.next_campaign_at = scheduler.add_months(i.last_campaign_at, i.interval_months)
         s.flush()
@@ -459,6 +461,9 @@ def identity_test(iid: int):
             c.noop()
             c.quit()
             out.append("SMTP OK")
+            if i.last_error.startswith("SMTP"):
+                i.last_error = ""
+            scheduler.clear_backoff(i.id)
         except Exception as e:
             out.append(f"SMTP ERRORE: {e}")
         if scheduler.imap_ready(i):

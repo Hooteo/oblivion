@@ -35,6 +35,7 @@
   <i style="width:{{ 100*(t.bounced+t.failed+t.refused)/t.total }}%;background:var(--bad)"></i>
  </div>
  {% endif %}
+ <p class="small {{ 'err' if c.send[0] == 'bad' else '' }}" style="margin:6px 0"><b>{{ '●' }}</b> {{ c.send[1] }}</p>
  <table class="small">
   <tr><td>Inviate</td><td><a href="/requests?identity={{ i.id }}">{{ sent }}</a> · in coda {{ t.queued }}</td></tr>
   <tr><td>Hanno risposto</td><td><a href="/requests?identity={{ i.id }}&status=answered">{{ t.replied + t.confirmed + t.no_data + t.needs_action + t.refused }}</a></td></tr>

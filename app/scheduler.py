@@ -22,6 +22,40 @@ _imap_lock = threading.Lock()
 _backoff: dict[int, datetime] = {}  # identity_id -> non inviare prima di
 
 
+def clear_backoff(identity_id: int) -> None:
+    _backoff.pop(identity_id, None)
+
+
+def sent_today(s, identity_id: int) -> int:
+    return s.scalar(select(func.count(Message.id)).join(Request).where(
+        Request.identity_id == identity_id, Message.direction == "out",
+        Message.date >= local_day_start_utc())) or 0
+
+
+def send_state(s, i: Identity) -> tuple[str, str]:
+    """Perche' una casella sta (o non sta) inviando: (livello, testo) per la dashboard."""
+    queued = s.scalar(select(func.count(Request.id)).where(
+        Request.identity_id == i.id, Request.status == "queued")) or 0
+    if not queued:
+        return "ok", "Niente in coda"
+    if not i.enabled:
+        return "warn", "Casella in pausa: le richieste in coda non partono"
+    if not smtp_ready(i):
+        return "warn", "SMTP non configurato"
+    until = _backoff.get(i.id)
+    if until and until > utcnow():
+        local = until.replace(tzinfo=timezone.utc).astimezone().strftime("%H:%M")
+        return "bad", f"Invii sospesi fino alle {local} dopo un errore SMTP"
+    if not in_send_window(s):
+        return "warn", f"Fuori dalla fascia oraria di invio ({get_setting(s, 'send_window')}): riprende domani"
+    today = sent_today(s, i.id)
+    if today >= i.daily_limit:
+        return "warn", f"Limite di {i.daily_limit} mail per oggi raggiunto: riprende domani"
+    interval = -(-max(1, get_int(s, "send_interval_seconds")) // 20) * 20  # il job gira ogni 20 s
+    return "ok", (f"In invio: circa 1 mail ogni {interval} s, {today}/{i.daily_limit} oggi, "
+                  f"{queued} in coda")
+
+
 def add_months(dt: datetime, months: int) -> datetime:
     m = dt.month - 1 + months
     y, m = dt.year + m // 12, m % 12 + 1
@@ -109,13 +143,10 @@ def job_send() -> None:
             if not in_send_window(s):
                 return
             interval = get_int(s, "send_interval_seconds")
-            day_start = local_day_start_utc()
             for i in s.scalars(select(Identity).where(Identity.enabled.is_(True))).all():
                 if not smtp_ready(i) or _backoff.get(i.id, datetime.min) > utcnow():
                     continue
-                sent_today = s.scalar(select(func.count(Message.id)).join(Request).where(
-                    Request.identity_id == i.id, Message.direction == "out", Message.date >= day_start)) or 0
-                if sent_today >= i.daily_limit:
+                if sent_today(s, i.id) >= i.daily_limit:
                     continue
                 last = s.scalar(select(func.max(Message.date)).join(Request).where(
                     Request.identity_id == i.id, Message.direction == "out"))
