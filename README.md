@@ -14,7 +14,6 @@ Alternativa open source e self-hosted a Incogni / DeleteMe. Invia ai data broker
 ```bash
 git clone https://github.com/Hooteo/oblivion.git && cd oblivion
 cp .env.example .env    # imposta DASHBOARD_PASSWORD e SECRET_KEY
-mkdir -p state && sudo chown 1000:1000 state   # il container gira come utente 1000
 docker compose up -d    # dashboard su http://IP:8095  (utente admin)
 ```
 
@@ -25,6 +24,8 @@ docker run --rm python:3.13-slim sh -c "pip -q install cryptography && python -c
 ```
 
 Senza `SECRET_KEY` la chiave viene creata in `state/secret.key`. Database e impostazioni stanno in `state/`: è la cartella da salvare nei backup. Le password SMTP/IMAP sono cifrate con questa chiave: se la perdi devi reinserirle.
+
+Il container sistema da solo i permessi della cartella `state/` all'avvio, poi gira come utente non privilegiato 1000. Per usare un altro utente imposta `PUID` e `PGID`.
 
 ## Primo utilizzo
 

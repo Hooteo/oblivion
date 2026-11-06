@@ -8,6 +8,8 @@ services:
       - "8095:8000"
     environment:
       TZ: Europe/Rome
+      # PUID: 1000   # utente con cui gira l'app (proprietario della cartella dati)
+      # PGID: 1000
       DASHBOARD_USER: admin
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?imposta DASHBOARD_PASSWORD nel file .env}
       # SECRET_KEY: chiave Fernet per cifrare le password SMTP/IMAP.
