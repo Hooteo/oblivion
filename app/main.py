@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import re
 import secrets
 import threading
 from contextlib import asynccontextmanager
@@ -338,6 +339,15 @@ PRESETS = {
 }
 
 
+_APP_PW = re.compile(r"^[a-zA-Z]{4}( [a-zA-Z]{4}){3}$")
+
+
+def normalize_password(pw: str) -> str:
+    """Le password per le app di Google/Apple si copiano come 'abcd efgh ijkl mnop': togliamo gli spazi."""
+    pw = pw.strip()
+    return pw.replace(" ", "") if _APP_PW.match(pw) else pw
+
+
 @app.get("/identities", response_class=HTMLResponse)
 def identities(request: HttpRequest):
     with session_scope() as s:
@@ -377,6 +387,7 @@ def identity_save(
         i.extra_identifiers = extra_identifiers.strip()
         i.smtp_host, i.smtp_port, i.smtp_security = smtp_host.strip(), smtp_port, smtp_security
         i.smtp_user = smtp_user.strip()
+        smtp_password, imap_password = normalize_password(smtp_password), normalize_password(imap_password)
         if smtp_password:
             i.smtp_password_enc = encrypt(smtp_password)
         i.imap_host, i.imap_port, i.imap_user = imap_host.strip(), imap_port, imap_user.strip()

@@ -260,7 +260,11 @@ def imap_connect(identity: Identity) -> imaplib.IMAP4:
     else:
         conn = imaplib.IMAP4_SSL(identity.imap_host, identity.imap_port,
                                  ssl_context=ssl.create_default_context(), timeout=60)
-    conn.login(identity.imap_user or identity.email, decrypt(identity.imap_password_enc))
+    try:
+        conn.login(identity.imap_user or identity.email, decrypt(identity.imap_password_enc))
+    except imaplib.IMAP4.error as e:
+        from .mailer import auth_hint
+        raise imaplib.IMAP4.error(auth_hint(identity, e)) from None
     return conn
 
 

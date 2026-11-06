@@ -41,8 +41,31 @@ def smtp_connect(identity: Identity) -> smtplib.SMTP:
     user = identity.smtp_user or identity.email
     pwd = decrypt(identity.smtp_password_enc)
     if pwd:
-        conn.login(user, pwd)
+        conn.user, conn.password = user, pwd
+        conn.ehlo_or_helo_if_needed()
+        if "plain" in (conn.esmtp_features.get("auth") or "").lower():
+            # Solo AUTH PLAIN: con login() smtplib, dopo un 535, ritenta con AUTH LOGIN e
+            # Gmail chiude la connessione, nascondendo l'errore vero ("password non accettata").
+            try:
+                conn.auth("PLAIN", conn.auth_plain)
+            except smtplib.SMTPAuthenticationError as e:
+                raise smtplib.SMTPAuthenticationError(e.smtp_code, auth_hint(identity, e)) from None
+        else:
+            conn.login(user, pwd)
     return conn
+
+
+def auth_hint(identity: Identity, err: Exception) -> str:
+    msg = getattr(err, "smtp_error", b"") or str(err)
+    msg = msg.decode(errors="replace") if isinstance(msg, bytes) else str(msg)
+    msg = " ".join(msg.split())
+    host = (identity.smtp_host + identity.imap_host).lower()
+    if "gmail" in host or "google" in host:
+        msg += (" → Gmail accetta solo una password per le app (16 lettere), da creare su "
+                "https://myaccount.google.com/apppasswords con la verifica in due passaggi attiva.")
+    elif any(h in host for h in ("yahoo", "icloud", "me.com", "outlook", "office365")):
+        msg += " → Questo provider richiede una password per le app, non la password normale."
+    return msg
 
 
 def build_message(s, req: Request, reminder: bool = False) -> EmailMessage:
