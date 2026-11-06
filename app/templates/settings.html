@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Impostazioni</h1>
+<form method="post" action="/settings">
+<div class="card"><h2 style="margin-top:0">Invio</h2><div class="fields">
+ <div class="field"><label>Sollecito dopo (giorni dall'invio senza risposta)</label><input name="reminder_days" type="number" value="{{ vals.reminder_days }}"></div>
+ <div class="field"><label>Chiudi come "nessuna risposta" dopo (giorni dal sollecito)</label><input name="close_after_days" type="number" value="{{ vals.close_after_days }}"></div>
+ <div class="field"><label>Pausa minima tra due invii (secondi)</label><input name="send_interval_seconds" type="number" value="{{ vals.send_interval_seconds }}"></div>
+ <div class="field"><label>Fascia oraria di invio (es. 8-21)</label><input name="send_window" value="{{ vals.send_window }}"></div>
+ <div class="field"><label>Disattiva un broker dopo N rimbalzi</label><input name="bounce_disable_after" type="number" value="{{ vals.bounce_disable_after }}"></div>
+ <div class="field"><label>Leggi la posta ogni (minuti, serve riavvio)</label><input name="imap_poll_minutes" type="number" value="{{ vals.imap_poll_minutes }}"></div>
+</div></div>
+<div class="card"><h2 style="margin-top:0">Testo della richiesta</h2>
+<p class="muted small">Segnaposto: {full_name} {email} {extra} {broker_name} {date}; nel sollecito anche {original_date}. In inglese perché va a broker di tutto il mondo. <a href="/preview">Anteprima</a> · <a href="/preview?reminder=1">anteprima sollecito</a></p>
+<label>Oggetto</label><input name="subject" value="{{ vals.subject }}" style="width:100%">
+<label style="margin-top:10px">Testo</label><textarea name="body" rows="22">{{ vals.body }}</textarea>
+<label style="margin-top:10px">Oggetto sollecito</label><input name="reminder_subject" value="{{ vals.reminder_subject }}" style="width:100%">
+<label style="margin-top:10px">Testo sollecito</label><textarea name="reminder_body" rows="12">{{ vals.reminder_body }}</textarea>
+</div>
+<div class="row"><button class="primary">Salva</button> <button name="reset" value="1" onclick="return confirm('Ripristinare i testi originali?')">Ripristina testi originali</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,17 @@
+services:
+  privacy-sweep:
+    image: ghcr.io/hooteo/privacy-sweep:latest
+    build: .   # "docker compose pull" usa l'immagine di GitHub, "up --build" la costruisce in locale
+    container_name: privacy-sweep
+    restart: unless-stopped
+    ports:
+      - "8095:8000"
+    environment:
+      TZ: Europe/Rome
+      DASHBOARD_USER: admin
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?imposta DASHBOARD_PASSWORD nel file .env}
+      # SECRET_KEY: chiave Fernet per cifrare le password SMTP/IMAP.
+      # Se manca viene generata in /data/secret.key (allora fai il backup di tutta la cartella).
+      SECRET_KEY: ${SECRET_KEY:-}
+    volumes:
+      - ./data:/data

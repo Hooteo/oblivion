@@ -1,0 +1,5 @@
+{% macro pager(page, pages, base) %}{% if pages > 1 %}<div class="pager">
+{% if page > 1 %}<a class="btn" href="{{ base }}&page={{ page-1 }}">‹ Prec.</a>{% endif %}
+<span class="muted">Pagina {{ page }} di {{ pages }}</span>
+{% if page < pages %}<a class="btn" href="{{ base }}&page={{ page+1 }}">Succ. ›</a>{% endif %}
+</div>{% endif %}{% endmacro %}

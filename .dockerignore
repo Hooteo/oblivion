@@ -1,0 +1,8 @@
+.git
+.env
+.venv
+__pycache__
+tests
+data/*.db*
+data/secret.key
+data/dashboard-password.txt

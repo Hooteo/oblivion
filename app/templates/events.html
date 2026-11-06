@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Registro attività</h1>
+<div class="card tablewrap"><table>
+{% for e in rows %}<tr><td class="small muted" style="white-space:nowrap">{{ e.at|local }}</td><td>{% if e.level != 'info' %}<b class="err">{{ e.level }}</b> {% endif %}{{ e.text }}</td></tr>{% else %}<tr><td class="muted">Vuoto.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

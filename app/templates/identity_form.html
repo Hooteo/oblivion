@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/identities">‹ Caselle email</a></p>
+<h1>{{ 'Modifica ' ~ i.label if i else 'Nuova casella' }}</h1>
+<form method="post" action="/identities/save" autocomplete="off">
+<input type="hidden" name="iid" value="{{ i.id if i else 0 }}">
+<div class="card"><h2 style="margin-top:0">Chi sei</h2><div class="fields">
+ <div class="field"><label>Etichetta (solo per te)</label><input name="label" value="{{ i.label if i }}" placeholder="es. Gmail registrazioni" required></div>
+ <div class="field"><label>Nome e cognome</label><input name="full_name" value="{{ i.full_name if i }}" required></div>
+ <div class="field"><label>Indirizzo email</label><input name="email" type="email" value="{{ i.email if i }}" required></div>
+</div>
+<label style="margin-top:12px">Altri dati per farti identificare (facoltativo, uno per riga: es. "Phone: +39 …", "Former email: …")</label>
+<textarea name="extra_identifiers" rows="3" placeholder="Più dati metti, più è facile per il broker trovarti, ma glieli stai comunicando: metti solo ciò che pensi abbiano già.">{{ i.extra_identifiers if i }}</textarea>
+</div>
+
+<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Server di posta</h2>
+<div class="row"><label for="preset" style="margin:0">Provider</label><select id="preset"><option value="">scegli per compilare…</option>
+{% for k in presets %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select></div></div>
+<div class="fields" style="margin-top:12px">
+ <div class="field"><label>SMTP host</label><input name="smtp_host" value="{{ i.smtp_host if i }}"></div>
+ <div class="field"><label>SMTP porta</label><input name="smtp_port" type="number" value="{{ i.smtp_port if i else 465 }}"></div>
+ <div class="field"><label>Sicurezza</label><select name="smtp_security">{% for v,l in [('ssl','SSL/TLS (465)'),('starttls','STARTTLS (587)'),('none','Nessuna')] %}<option value="{{ v }}" {{ 'selected' if i and i.smtp_security==v }}>{{ l }}</option>{% endfor %}</select></div>
+ <div class="field"><label>SMTP utente (vuoto = l'email)</label><input name="smtp_user" value="{{ i.smtp_user if i }}"></div>
+ <div class="field"><label>SMTP password {% if i and i.smtp_password_enc %}(salvata: lascia vuoto per non cambiarla){% endif %}</label><input name="smtp_password" type="password" autocomplete="new-password"></div>
+</div>
+<div class="fields" style="margin-top:12px">
+ <div class="field"><label>IMAP host (per leggere le risposte)</label><input name="imap_host" value="{{ i.imap_host if i }}"></div>
+ <div class="field"><label>IMAP porta</label><input name="imap_port" type="number" value="{{ i.imap_port if i else 993 }}"></div>
+ <div class="field"><label>IMAP utente (vuoto = l'email)</label><input name="imap_user" value="{{ i.imap_user if i }}"></div>
+ <div class="field"><label>IMAP password {% if i and i.imap_password_enc %}(salvata){% endif %}</label><input name="imap_password" type="password" autocomplete="new-password"></div>
+ <div class="field"><label>Cartelle da leggere (separate da virgola)</label><input name="imap_folders" value="{{ i.imap_folders if i else 'INBOX' }}"></div>
+</div>
+<label class="chk" style="margin-top:10px"><input type="checkbox" name="imap_same_password" value="1" {{ 'checked' if not i }}> Usa la stessa password dell'SMTP</label>
+<p class="muted small">Le password sono salvate cifrate nel database. La lettura IMAP è in sola lettura: non sposta né segna come lette le tue mail.</p>
+</div>
+
+<div class="card"><h2 style="margin-top:0">Pianificazione</h2><div class="fields">
+ <div class="field"><label>Ripeti le richieste ogni</label><select name="interval_months">{% for m in [3, 6] %}<option value="{{ m }}" {{ 'selected' if (i.interval_months if i else 6)==m }}>{{ m }} mesi</option>{% endfor %}</select></div>
+ <div class="field"><label>Massimo mail al giorno da questa casella</label><input name="daily_limit" type="number" min="1" max="2000" value="{{ i.daily_limit if i else 80 }}"></div>
+</div>
+<p class="muted small">Inviando quasi 1000 mail in un giorno il provider ti blocca come spammer. Con 80 al giorno una campagna completa dura circa 12 giorni. Gmail tollera fino a ~400/giorno, Outlook ~250.</p>
+<label class="chk"><input type="checkbox" name="enabled" value="1" {{ 'checked' if not i or i.enabled }}> Casella attiva</label>
+{% if not i or not i.last_campaign_at %}<label class="chk"><input type="checkbox" name="start_now" value="1"> Avvia subito la prima campagna</label>{% endif %}
+</div>
+<div class="row"><button class="primary">Salva</button></div>
+</form>
+
+{% if i %}
+<div class="card" style="margin-top:16px"><h2 style="margin-top:0">Verifiche</h2><div class="row">
+ <form class="inline" method="post" action="/identities/{{ i.id }}/test"><button>Prova connessione SMTP e IMAP</button></form>
+ <form class="inline" method="post" action="/identities/{{ i.id }}/test-send"><button>Mandami una richiesta di prova</button></form>
+ <a class="btn" href="/preview?identity={{ i.id }}">Anteprima testo</a>
+ {% if i.imap_host %}<a class="btn" href="/identities/{{ i.id }}/folders" target="_blank">Elenco cartelle IMAP</a>{% endif %}
+</div></div>
+{% endif %}
+<script>
+const P = {{ presets|tojson }};
+document.getElementById('preset').addEventListener('change', e => {
+  const p = P[e.target.value]; if (!p) return;
+  const f = document.forms[0];
+  [f.smtp_host.value, f.smtp_port.value, f.smtp_security.value, f.imap_host.value, f.imap_port.value, f.imap_folders.value] = p;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}{% from "_status.html" import st %}
+{% block content %}
+<p><a href="/requests">‹ Richieste</a></p>
+<h1>{{ r.broker.name }} {{ st(r.status) }}</h1>
+<div class="grid">
+<div class="card small"><table>
+ <tr><td>Casella</td><td>{{ r.identity.label }} · {{ r.identity.email }}</td></tr>
+ <tr><td>Destinatario</td><td>{{ r.to_email }}</td></tr>
+ <tr><td>Sito</td><td>{% if r.broker.website %}<a href="{{ r.broker.website }}" target="_blank" rel="noopener">{{ r.broker.website }}</a>{% endif %}</td></tr>
+ <tr><td>Pagina privacy</td><td>{% if r.broker.privacy_url %}<a href="{{ r.broker.privacy_url }}" target="_blank" rel="noopener">{{ r.broker.privacy_url[:70] }}</a>{% endif %}</td></tr>
+ <tr><td>Fonte</td><td>{{ r.broker.source }} · {{ r.broker.jurisdiction|upper }}</td></tr>
+ <tr><td>Creata</td><td>{{ r.created_at|local }}</td></tr>
+ <tr><td>Inviata</td><td>{{ r.sent_at|local }}</td></tr>
+ <tr><td>Sollecito</td><td>{{ r.reminded_at|local }}</td></tr>
+ <tr><td>Tentativi</td><td>{{ r.attempts }}</td></tr>
+ {% if r.error %}<tr><td>Errore</td><td class="err">{{ r.error }}</td></tr>{% endif %}
+</table></div>
+<div class="card">
+ <form method="post" action="/requests/{{ r.id }}/status">
+  <label>Stato</label>
+  <select name="status">{% for k, v in STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if r.status==k }}>{{ v }}</option>{% endfor %}</select>
+  <label style="margin-top:10px">Note</label><textarea name="notes" rows="4">{{ r.notes }}</textarea>
+  <div class="row" style="margin-top:8px"><button class="primary">Salva</button>
+  {% if r.status_manual %}<span class="muted small">Stato impostato a mano: le risposte non lo cambiano più.</span>{% endif %}</div>
+ </form>
+ <div class="row" style="margin-top:10px">
+  {% if r.status_manual %}<form class="inline" method="post" action="/requests/{{ r.id }}/auto"><button>Torna automatico</button></form>{% endif %}
+  <form class="inline" method="post" action="/requests/{{ r.id }}/resend" onsubmit="return confirm('Rimettere in coda la richiesta?')"><button>Rimanda la richiesta</button></form>
+ </div>
+</div>
+</div>
+<h2>Conversazione</h2>
+{% for m in r.messages %}
+<div class="msg {{ m.direction }}">
+ <div class="small"><b>{{ 'Inviata' if m.direction == 'out' else 'Ricevuta' }}</b> · {{ m.date|local }} · {{ m.from_addr }} → {{ m.to_addr }}
+ {% if m.classification %} · {{ st(m.classification) }}{% endif %}</div>
+ <div><b>{{ m.subject }}</b></div>
+ <pre class="mail">{{ m.body }}</pre>
+</div>
+{% else %}<p class="muted">Non ancora inviata.</p>{% endfor %}
+{% endblock %}

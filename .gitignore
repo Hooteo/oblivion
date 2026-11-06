@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+/data/*.db*
+/data/secret.key
+/data/dashboard-password.txt
+.venv/
+.pytest_cache/

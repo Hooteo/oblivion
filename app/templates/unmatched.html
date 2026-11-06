@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Mail da abbinare</h1>
+<p class="muted">Mail arrivate da domini di broker (o rimbalzi) che non sono riuscito ad associare con certezza a una richiesta, di solito perché arrivano da piattaforme condivise come OneTrust o Zendesk. Scrivi il nome del broker per abbinarle.</p>
+{% for u in rows %}
+<div class="card">
+ <div class="small muted">{{ u.date|local }} · {{ u.from_addr }}</div><b>{{ u.subject }}</b>
+ <details><summary class="small">mostra testo</summary><pre class="mail">{{ u.body }}</pre></details>
+ <div class="row" style="margin-top:8px">
+  <form class="row" method="post" action="/unmatched/{{ u.id }}/assign"><input name="broker_query" placeholder="nome o email del broker" required><button class="primary">Abbina</button></form>
+  <form class="inline" method="post" action="/unmatched/{{ u.id }}/delete"><button>Ignora</button></form>
+ </div>
+</div>
+{% else %}<div class="card muted">Niente da abbinare.</div>{% endfor %}
+{% endblock %}

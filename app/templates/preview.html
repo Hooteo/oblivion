@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/settings">‹ Impostazioni</a></p>
+<h1>Anteprima {{ 'sollecito' if reminder else 'richiesta' }}</h1>
+<div class="card"><div><b>Oggetto:</b> {{ subject }}</div><pre class="mail">{{ body }}</pre></div>
+{% endblock %}

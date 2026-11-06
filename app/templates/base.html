@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}privacy-sweep{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css"></head>
+<body>
+<header><div class="in">
+ <a class="brand" href="/">privacy-sweep</a>
+ {% set p = request.url.path %}
+ <nav>
+  <a href="/" class="{{ 'on' if p == '/' }}">Panoramica</a>
+  <a href="/requests" class="{{ 'on' if p.startswith('/requests') }}">Richieste</a>
+  <a href="/unmatched" class="{{ 'on' if p.startswith('/unmatched') }}">Da abbinare{% if unmatched_count %}<span class="badge">{{ unmatched_count }}</span>{% endif %}</a>
+  <a href="/brokers" class="{{ 'on' if p.startswith('/brokers') }}">Broker</a>
+  <a href="/identities" class="{{ 'on' if p.startswith('/identities') }}">Caselle email</a>
+  <a href="/settings" class="{{ 'on' if p.startswith('/settings') or p.startswith('/preview') }}">Impostazioni</a>
+  <a href="/events" class="{{ 'on' if p.startswith('/events') }}">Registro</a>
+ </nav>
+</div></header>
+<main>
+{% if msg %}<div class="flash">{{ msg }}</div>{% endif %}
+{% block content %}{% endblock %}
+</main>
+</body></html>

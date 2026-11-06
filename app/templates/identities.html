@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row" style="justify-content:space-between"><h1>Caselle email</h1><a class="btn primary" href="/identities/new">Aggiungi casella</a></div>
+<div class="card tablewrap"><table>
+<tr><th>Nome</th><th>Email</th><th class="hm">SMTP</th><th class="hm">IMAP</th><th>Ogni</th><th>Prossima campagna</th><th>Stato</th><th></th></tr>
+{% for i in rows %}<tr>
+ <td><a href="/identities/{{ i.id }}/edit">{{ i.label }}</a></td><td>{{ i.email }}</td>
+ <td class="hm small">{{ i.smtp_host or '—' }}</td><td class="hm small">{{ i.imap_host or '—' }}</td>
+ <td>{{ i.interval_months }} mesi</td><td>{{ i.next_campaign_at|day }}</td>
+ <td>{{ 'Attiva' if i.enabled else 'In pausa' }}{% if i.last_error %}<div class="err small">{{ i.last_error[:120] }}</div>{% endif %}</td>
+ <td class="row">
+  <form class="inline" method="post" action="/identities/{{ i.id }}/pause"><button>{{ 'Metti in pausa' if i.enabled else 'Riattiva' }}</button></form>
+  <form class="inline" method="post" action="/identities/{{ i.id }}/delete" onsubmit="return confirm('Eliminare la casella e TUTTO lo storico delle sue richieste?')"><button class="danger">Elimina</button></form>
+ </td></tr>{% else %}<tr><td colspan="8" class="muted">Nessuna casella configurata.</td></tr>{% endfor %}
+</table></div>
+<p class="muted small">Ogni casella invia le richieste a nome proprio e chiede di cancellare i dati collegati a quell'indirizzo. Gmail, Outlook, Yahoo e iCloud richiedono una <b>password per le app</b> (con verifica in due passaggi attiva), non la password normale.</p>
+{% endblock %}

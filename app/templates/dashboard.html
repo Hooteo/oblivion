@@ -1,0 +1,77 @@
+{% extends "base.html" %}{% from "_status.html" import st %}
+{% block content %}
+<h1>Panoramica</h1>
+{% set done = total.confirmed + total.no_data %}
+<div class="kpis">
+ <div class="kpi"><b>{{ total.total - total.queued - total.cancelled }}</b><span>Richieste inviate</span></div>
+ <div class="kpi"><b>{{ total.queued }}</b><span>In coda</span></div>
+ <div class="kpi"><b>{{ total.sent + total.reminded }}</b><span>In attesa di risposta</span></div>
+ <div class="kpi ok"><b>{{ done }}</b><span>Cancellati / nessun dato</span></div>
+ <div class="kpi warn"><b>{{ total.needs_action }}</b><span>Serve un tuo intervento</span></div>
+ <div class="kpi"><b>{{ total.replied }}</b><span>Risposte da leggere</span></div>
+ <div class="kpi bad"><b>{{ total.bounced + total.failed }}</b><span>Non recapitate</span></div>
+ <div class="kpi"><b>{{ brokers_on }}</b><span>Broker attivi</span></div>
+</div>
+
+{% if not cards %}
+<div class="card"><h2 style="margin-top:0">Inizia da qui</h2>
+<p>Aggiungi le caselle email da cui vuoi inviare le richieste. Ogni casella è anche il dato che chiedi di cancellare.</p>
+<a class="btn primary" href="/identities/new">Aggiungi una casella</a></div>
+{% endif %}
+
+<div class="grid">
+{% for c in cards %}{% set i = c.i %}{% set t = c.st %}
+<div class="card">
+ <div class="row" style="justify-content:space-between">
+  <div><b>{{ i.label }}</b> <span class="muted">{{ i.email }}</span></div>
+  {% if not i.enabled %}<span class="st">In pausa</span>{% endif %}
+ </div>
+ {% set sent = t.total - t.queued - t.cancelled %}
+ {% if t.total %}
+ <div class="bar" style="margin:12px 0 6px" title="verde: chiuse bene · arancione: da fare · blu: in attesa · rosso: errori">
+  <i style="width:{{ 100*(t.confirmed+t.no_data)/t.total }}%;background:var(--ok)"></i>
+  <i style="width:{{ 100*(t.needs_action+t.reminded)/t.total }}%;background:var(--warn)"></i>
+  <i style="width:{{ 100*(t.sent+t.replied)/t.total }}%;background:var(--info)"></i>
+  <i style="width:{{ 100*(t.bounced+t.failed+t.refused)/t.total }}%;background:var(--bad)"></i>
+ </div>
+ {% endif %}
+ <table class="small">
+  <tr><td>Inviate</td><td><a href="/requests?identity={{ i.id }}">{{ sent }}</a> · in coda {{ t.queued }}</td></tr>
+  <tr><td>Hanno risposto</td><td><a href="/requests?identity={{ i.id }}&status=answered">{{ t.replied + t.confirmed + t.no_data + t.needs_action + t.refused }}</a></td></tr>
+  <tr><td>Confermate</td><td><a href="/requests?identity={{ i.id }}&status=confirmed">{{ t.confirmed }}</a> · nessun dato <a href="/requests?identity={{ i.id }}&status=no_data">{{ t.no_data }}</a></td></tr>
+  <tr><td>Da gestire</td><td><a href="/requests?identity={{ i.id }}&status=needs_action">{{ t.needs_action }}</a></td></tr>
+  <tr><td>Nessuna risposta</td><td>{{ t.no_response }} · rimbalzi {{ t.bounced }}</td></tr>
+  <tr><td>Ultima campagna</td><td>{{ i.last_campaign_at|day }}</td></tr>
+  <tr><td>Prossima</td><td>{{ i.next_campaign_at|day }} (ogni {{ i.interval_months }} mesi)</td></tr>
+  <tr><td>Ultima lettura posta</td><td>{{ i.last_imap_check|local }}{% if not c.imap %} <span class="err">IMAP non configurato</span>{% endif %}</td></tr>
+ </table>
+ {% if i.last_error %}<p class="err small">{{ i.last_error }}</p>{% endif %}
+ <div class="row" style="margin-top:10px">
+  <form class="inline" method="post" action="/identities/{{ i.id }}/check"><button {{ 'disabled' if not c.imap }}>Controlla risposte</button></form>
+  <form class="inline" method="post" action="/identities/{{ i.id }}/start" onsubmit="return confirm('Avviare ora una nuova campagna verso tutti i broker attivi?')"><button {{ 'disabled' if not c.smtp }}>Avvia campagna ora</button></form>
+  <a class="btn" href="/identities/{{ i.id }}/edit">Modifica</a>
+ </div>
+</div>
+{% endfor %}
+</div>
+
+{% if action %}
+<h2>Serve un tuo intervento</h2>
+<div class="card tablewrap"><table>
+<tr><th>Broker</th><th>Casella</th><th class="hm">Risposta</th><th></th></tr>
+{% for r in action %}<tr><td><a href="/requests/{{ r.id }}">{{ r.broker.name }}</a></td><td>{{ r.identity.label }}</td>
+<td class="hm">{{ r.last_reply_at|local }}</td><td>{% if r.broker.privacy_url %}<a href="{{ r.broker.privacy_url }}" target="_blank" rel="noopener">pagina privacy ↗</a>{% endif %}</td></tr>{% endfor %}
+</table></div>
+{% endif %}
+
+<h2>Ultime risposte</h2>
+<div class="card tablewrap">{% if replies %}<table>
+<tr><th>Quando</th><th>Broker</th><th>Casella</th><th class="hm">Oggetto</th><th>Esito</th></tr>
+{% for m in replies %}<tr><td>{{ m.date|local }}</td><td><a href="/requests/{{ m.request_id }}">{{ m.request.broker.name }}</a></td>
+<td>{{ m.request.identity.label }}</td><td class="hm">{{ m.subject[:90] }}</td><td>{{ st(m.classification) }}</td></tr>{% endfor %}
+</table>{% else %}<p class="muted">Nessuna risposta ancora.</p>{% endif %}</div>
+
+<h2>Attività recente</h2>
+<div class="card small">{% for e in events %}<div><span class="muted">{{ e.at|local }}</span> {% if e.level != 'info' %}<b class="err">{{ e.level }}</b> {% endif %}{{ e.text }}</div>{% else %}<span class="muted">Niente da segnalare.</span>{% endfor %}
+<div style="margin-top:6px"><a href="/events">Registro completo</a></div></div>
+{% endblock %}

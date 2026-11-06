@@ -1,0 +1,54 @@
+{% extends "base.html" %}{% from "_pager.html" import pager %}
+{% block content %}
+<h1>Broker <span class="muted small">{{ on }} attivi · {{ off }} disattivati</span></h1>
+<div class="card">
+<form class="row" method="get">
+ <input name="q" value="{{ q }}" placeholder="Cerca nome, email, sito">
+ <select name="source"><option value="">Tutte le fonti</option>
+  <option value="cppa" {{ 'selected' if source=='cppa' }}>Registro California (USA)</option>
+  <option value="datarequests" {{ 'selected' if source=='datarequests' }}>datarequests.org (UE)</option>
+  <option value="manual" {{ 'selected' if source=='manual' }}>Aggiunti da te</option></select>
+ <select name="state"><option value="">Tutti</option>
+  <option value="on" {{ 'selected' if state=='on' }}>Attivi</option><option value="off" {{ 'selected' if state=='off' }}>Disattivati</option>
+  <option value="manual" {{ 'selected' if state=='manual' }}>Solo modulo web / posta</option>
+  <option value="bounced" {{ 'selected' if state=='bounced' }}>Con rimbalzi</option></select>
+ <button class="primary">Filtra</button>
+</form>
+<div class="row" style="margin-top:10px">
+ <form class="inline" method="post" action="/brokers/bulk"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="source" value="{{ source }}">
+  <button name="action" value="enable">Attiva tutti quelli filtrati</button> <button name="action" value="disable">Disattiva tutti quelli filtrati</button></form>
+ <form class="inline" method="post" action="/brokers/refresh"><button {{ 'disabled' if refreshing }}>{{ 'Aggiornamento in corso…' if refreshing else 'Aggiorna database dalle fonti' }}</button></form>
+</div>
+<p class="muted small">I broker disattivati di default sono quelli rilevanti solo per altri paesi (es. solo Germania) e le agenzie di credito, che di solito rifiutano la cancellazione per obblighi di legge. Quelli "solo modulo web / posta" non accettano email: vanno gestiti a mano dalla loro pagina privacy.</p>
+</div>
+
+<div class="card tablewrap"><table>
+<tr><th>Nome</th><th>Email</th><th class="hm">Fonte</th><th class="hm">Paesi</th><th class="hm">Categorie</th><th>Attivo</th></tr>
+{% for b in rows %}<tr>
+ <td>{% if b.website %}<a href="{{ b.website }}" target="_blank" rel="noopener">{{ b.name }}</a>{% else %}{{ b.name }}{% endif %}
+  {% if b.privacy_url %} <a class="small" href="{{ b.privacy_url }}" target="_blank" rel="noopener">privacy ↗</a>{% endif %}
+  {% if b.removed_upstream %} <span class="st">non più nelle fonti</span>{% endif %}
+  {% if b.notes %}<div class="muted small">{{ b.notes }}</div>{% endif %}</td>
+ <td class="small">{{ b.email or ('— ' ~ b.method) }}{% if b.bounce_count %} <span class="err">({{ b.bounce_count }} rimbalzi)</span>{% endif %}</td>
+ <td class="hm small">{{ b.source }}</td><td class="hm small">{{ b.countries|join(', ') }}</td><td class="hm small">{{ b.categories|join(', ') }}</td>
+ <td><form class="inline" method="post" action="/brokers/{{ b.id }}/toggle"><button title="clic per cambiare">{{ '✔ sì' if b.enabled else '✕ no' }}</button></form>
+  <details class="small"><summary>modifica</summary>
+  <form method="post" action="/brokers/save"><input type="hidden" name="bid" value="{{ b.id }}"><input type="hidden" name="jurisdiction" value="{{ b.jurisdiction }}">
+   <input name="name" value="{{ b.name }}" required><input name="email" value="{{ b.email }}" placeholder="email privacy">
+   <input name="website" value="{{ b.website }}" placeholder="sito"><input name="privacy_url" value="{{ b.privacy_url }}" placeholder="pagina privacy">
+   <input name="notes" value="{{ b.notes }}" placeholder="note"><button>Salva</button></form></details></td>
+</tr>{% endfor %}
+</table>
+{{ pager(page, pages, '/brokers?q=' ~ q|urlencode ~ '&source=' ~ source ~ '&state=' ~ state) }}
+</div>
+
+<h2>Aggiungi un broker</h2>
+<form class="card" method="post" action="/brokers/save"><div class="fields">
+ <div class="field"><label>Nome</label><input name="name" required></div>
+ <div class="field"><label>Email privacy / DPO</label><input name="email" type="email"></div>
+ <div class="field"><label>Sito</label><input name="website"></div>
+ <div class="field"><label>Pagina privacy</label><input name="privacy_url"></div>
+ <div class="field"><label>Giurisdizione</label><select name="jurisdiction"><option value="eu">UE</option><option value="us">USA</option></select></div>
+ <div class="field"><label>Note</label><input name="notes"></div>
+</div><p><button class="primary">Aggiungi</button></p></form>
+{% endblock %}

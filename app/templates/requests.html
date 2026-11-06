@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% from "_status.html" import st %}{% from "_pager.html" import pager %}
+{% block content %}
+<h1>Richieste <span class="muted small">{{ total }} risultati</span></h1>
+<form class="card row" method="get">
+ <select name="identity"><option value="0">Tutte le caselle</option>{% for i in idents %}<option value="{{ i.id }}" {{ 'selected' if i.id == f_identity }}>{{ i.label }} · {{ i.email }}</option>{% endfor %}</select>
+ <select name="status"><option value="">Tutti gli stati</option>
+  <option value="open" {{ 'selected' if f_status=='open' }}>In attesa (inviate + sollecitate)</option>
+  <option value="answered" {{ 'selected' if f_status=='answered' }}>Hanno risposto (qualsiasi esito)</option>
+  {% for k, v in STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if f_status==k }}>{{ v }}</option>{% endfor %}</select>
+ <input name="q" value="{{ q }}" placeholder="Cerca broker o email">
+ <button class="primary">Filtra</button>
+</form>
+<div class="card tablewrap"><table>
+<tr><th>Broker</th><th class="hm">Destinatario</th><th>Casella</th><th>Inviata</th><th class="hm">Sollecito</th><th>Ultima risposta</th><th>Stato</th></tr>
+{% for r in rows %}<tr>
+ <td><a href="/requests/{{ r.id }}">{{ r.broker.name }}</a></td><td class="hm small">{{ r.to_email }}</td>
+ <td>{{ r.identity.label }}</td><td>{{ r.sent_at|day }}</td><td class="hm">{{ r.reminded_at|day }}</td>
+ <td>{{ r.last_reply_at|local }}{% if r.reply_count > 1 %} <span class="muted">({{ r.reply_count }})</span>{% endif %}</td>
+ <td>{{ st(r.status) }}{% if r.status_manual %} <span class="muted small" title="impostato a mano">✎</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="7" class="muted">Nessuna richiesta.</td></tr>{% endfor %}
+</table>
+{{ pager(page, pages, '/requests?identity=' ~ f_identity ~ '&status=' ~ f_status ~ '&q=' ~ q|urlencode) }}
+</div>
+{% endblock %}
